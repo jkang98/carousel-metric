@@ -5,8 +5,11 @@ notebook-first analysis project for carousel examination behavior and 2D
 discount functions.
 
 Start with `notebooks/carousel_metric_reorganized.ipynb`. The raw original
-notebook is preserved at `notebooks/carousel_metric_original.ipynb`, and the
-helper functions used by the cleaned notebook live in `src/carousel_metric/`.
+notebook is preserved at `notebooks/carousel_metric_original.ipynb`.
+
+The reorganized notebook is self-contained: it does not import helper functions
+from `src/carousel_metric/`. The `src/` package is kept as an optional reusable
+version of the same logic.
 
 ## What The Project Does
 
@@ -57,6 +60,9 @@ Open and run:
 notebooks/carousel_metric_reorganized.ipynb
 ```
 
+This notebook defines its own data-cleaning helpers, plotting helpers, discount
+functions, metric scoring, and simulation code directly in notebook cells.
+
 The notebook is organized as:
 
 1. setup and local file paths;
@@ -77,7 +83,7 @@ data/raw/click_summary_dataset.csv
 
 See `data/README.md` for the expected columns.
 
-## Run The Analysis
+## Optional CLI Workflow
 
 ```bash
 carousel-metric analyze \
