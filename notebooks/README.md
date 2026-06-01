@@ -1,7 +1,11 @@
 # Notebooks
 
-`carousel_metric_original.ipynb` is the original notebook copied from Downloads.
+`carousel_metric_reorganized.ipynb` is the recommended notebook-first workflow.
+It keeps the analysis in clear sections and calls the reusable helpers in
+`src/carousel_metric/`.
 
-The production workflow has been moved into `src/carousel_metric/` so the
-analysis can be rerun, tested, and reviewed without relying on notebook cell
-order or Colab-specific paths.
+`carousel_metric_original.ipynb` is the raw original notebook copied from
+Downloads for reference.
+
+The helper modules make repeated notebook cells easier to read and test, but the
+cleaned notebook remains the easiest place to run the project end to end.

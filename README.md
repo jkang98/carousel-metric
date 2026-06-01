@@ -1,12 +1,12 @@
 # Carousel Metric
 
 This repository reorganizes the original `carousel_metric.ipynb` notebook into a
-small, reusable Python project for analyzing carousel examination behavior and
-comparing 2D discount functions.
+notebook-first analysis project for carousel examination behavior and 2D
+discount functions.
 
-The original notebook is preserved at
-`notebooks/carousel_metric_original.ipynb`. The reusable implementation lives in
-`src/carousel_metric/`.
+Start with `notebooks/carousel_metric_reorganized.ipynb`. The raw original
+notebook is preserved at `notebooks/carousel_metric_original.ipynb`, and the
+helper functions used by the cleaned notebook live in `src/carousel_metric/`.
 
 ## What The Project Does
 
@@ -26,7 +26,8 @@ carousel-metric/
 |   `-- raw/                         # Put local CSV inputs here; ignored by git
 |-- notebooks/
 |   |-- README.md
-|   `-- carousel_metric_original.ipynb
+|   |-- carousel_metric_original.ipynb
+|   `-- carousel_metric_reorganized.ipynb
 |-- outputs/                         # Generated CSV/PDF/TXT outputs; ignored by git
 |-- src/carousel_metric/
 |   |-- analysis.py                  # End-to-end analysis workflow
@@ -47,6 +48,23 @@ python -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"
 ```
+
+## Recommended Notebook Workflow
+
+Open and run:
+
+```text
+notebooks/carousel_metric_reorganized.ipynb
+```
+
+The notebook is organized as:
+
+1. setup and local file paths;
+2. data preparation;
+3. empirical examination heatmaps;
+4. candidate discount functions;
+5. metric scoring and final comparison figure;
+6. binary and graded N2DCG simulations.
 
 ## Data Inputs
 
