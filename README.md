@@ -1,16 +1,6 @@
 # Carousel Metric
 
-This repository provides a Python package and command-line workflow for
-analyzing carousel examination behavior and comparing 2D discount functions.
-
-## What The Project Does
-
-1. Loads raw eye-tracking interaction data and click summaries.
-2. Keeps only pre-click free-browsing interactions.
-3. Builds empirical examination-frequency grids for KINIT, UvA, and all users.
-4. Generates candidate discount functions.
-5. Scores each discount function against the empirical examination grid.
-6. Produces heatmaps, comparison figures, and simulation reports.
+This repository is for analyzing carousel examination behavior and comparing 2D discount functions.
 
 ## Repository Layout
 
@@ -18,8 +8,6 @@ analyzing carousel examination behavior and comparing 2D discount functions.
 carousel-metric/
 |-- data/
 |   |-- README.md
-|   |-- click_summary_dataset.csv
-|   `-- summary_feedback.csv
 |-- carousel_metric/
 |   |-- analysis.py                  # End-to-end analysis workflow
 |   |-- cli.py                       # Command-line entrypoints
@@ -28,10 +16,10 @@ carousel-metric/
 |   |-- discounts.py                 # Candidate discount functions
 |   |-- metrics.py                   # Correlation and MSE scoring
 |   |-- plotting.py                  # Heatmaps and comparison figures
-|   `-- simulation.py                # Binary/graded N2DCG simulations
+|   |-- simulation.py                # Binary/graded N2DCG simulations
 |-- outputs/                         # Generated CSV/PDF/TXT outputs; ignored by git
 |-- requirements.txt
-`-- tests/
+|-- tests/
 ```
 
 ## Setup
@@ -44,7 +32,7 @@ python -m pip install -r requirements.txt
 
 ## Data Inputs
 
-Place the raw CSV files here:
+Download and place the raw CSV files here:
 
 ```text
 data/summary_feedback.csv
