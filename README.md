@@ -26,7 +26,8 @@ version of the same logic.
 carousel-metric/
 |-- data/
 |   |-- README.md
-|   `-- raw/                         # Put local CSV inputs here; ignored by git
+|   |-- click_summary_dataset.csv
+|   `-- summary_feedback.csv
 |-- notebooks/
 |   |-- README.md
 |   |-- carousel_metric_original.ipynb
@@ -77,18 +78,18 @@ The notebook is organized as:
 Place the raw CSV files here:
 
 ```text
-data/raw/summary_feedback.csv
-data/raw/click_summary_dataset.csv
+data/summary_feedback.csv
+data/click_summary_dataset.csv
 ```
 
-See `data/README.md` for the expected columns.
+See `data/README.md` for the dataset source.
 
 ## Optional CLI Workflow
 
 ```bash
 carousel-metric analyze \
-  --interactions data/raw/summary_feedback.csv \
-  --clicks data/raw/click_summary_dataset.csv \
+  --interactions data/summary_feedback.csv \
+  --clicks data/click_summary_dataset.csv \
   --output-dir outputs
 ```
 
