@@ -20,8 +20,7 @@ carousel-metric/
 |   |-- README.md
 |   |-- click_summary_dataset.csv
 |   `-- summary_feedback.csv
-|-- outputs/                         # Generated CSV/PDF/TXT outputs; ignored by git
-|-- src/carousel_metric/
+|-- carousel_metric/
 |   |-- analysis.py                  # End-to-end analysis workflow
 |   |-- cli.py                       # Command-line entrypoints
 |   |-- constants.py                 # Shared column names and defaults
@@ -30,6 +29,8 @@ carousel-metric/
 |   |-- metrics.py                   # Correlation and MSE scoring
 |   |-- plotting.py                  # Heatmaps and comparison figures
 |   `-- simulation.py                # Binary/graded N2DCG simulations
+|-- outputs/                         # Generated CSV/PDF/TXT outputs; ignored by git
+|-- requirements.txt
 `-- tests/
 ```
 
@@ -38,7 +39,7 @@ carousel-metric/
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install -e ".[dev]"
+python -m pip install -r requirements.txt
 ```
 
 ## Data Inputs
@@ -55,7 +56,7 @@ See `data/README.md` for the dataset source.
 ## Run The Analysis
 
 ```bash
-carousel-metric analyze \
+python -m carousel_metric analyze \
   --interactions data/summary_feedback.csv \
   --clicks data/click_summary_dataset.csv \
   --output-dir outputs
@@ -76,7 +77,7 @@ After running the analysis, simulate agreement against the UvA empirical
 examination grid:
 
 ```bash
-carousel-metric simulate \
+python -m carousel_metric simulate \
   --exam-csv outputs/examination_uva.csv \
   --mode binary \
   --trials 20000 \
@@ -86,7 +87,7 @@ carousel-metric simulate \
 For graded relevance:
 
 ```bash
-carousel-metric simulate \
+python -m carousel_metric simulate \
   --exam-csv outputs/examination_uva.csv \
   --mode graded \
   --trials 20000 \
@@ -96,7 +97,7 @@ carousel-metric simulate \
 ## Development
 
 ```bash
-pytest
+python -m pytest
 ```
 
 The test suite checks the discount geometry and metric scoring helpers. It does
