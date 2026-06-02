@@ -51,7 +51,7 @@ class SimulationConfig:
 
 
 def compute_original_discount(config: SimulationConfig) -> np.ndarray:
-    """Compute the original notebook discount matrix."""
+    """Compute the original baseline discount matrix."""
 
     d = np.zeros((config.n_rows, config.n_cols), dtype=float)
     params = config.original
@@ -414,7 +414,7 @@ def format_layout(layout: np.ndarray) -> str:
 
 
 def format_simulation_report(result: dict[str, Any]) -> str:
-    """Format simulation output in the same spirit as the notebook."""
+    """Format simulation output as a plain-text report."""
 
     counts = result["counts"]
     n = result["n"]

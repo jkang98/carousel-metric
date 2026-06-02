@@ -69,7 +69,7 @@ def build_parser() -> argparse.ArgumentParser:
     analyze.add_argument(
         "--keep-all-familiarity",
         action="store_true",
-        help="Skip the notebook's Movie_Familiarity exclusion filter.",
+        help="Skip the Movie_Familiarity exclusion filter.",
     )
 
     simulate = subparsers.add_parser("simulate", help="Run the N2DCG simulation.")

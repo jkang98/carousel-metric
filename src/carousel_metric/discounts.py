@@ -1,4 +1,4 @@
-"""Candidate discount functions from the original notebook."""
+"""Candidate discount functions for carousel layouts."""
 
 from __future__ import annotations
 
@@ -205,7 +205,7 @@ def candidate_discount_matrices(
     n_rows: int = DEFAULT_N_ROWS,
     n_cols: int = DEFAULT_N_COLS,
 ) -> OrderedDict[str, np.ndarray]:
-    """Return the six notebook candidate discounts as named matrices."""
+    """Return the six candidate discounts as named matrices."""
 
     return OrderedDict(
         [
@@ -232,7 +232,7 @@ def candidate_discount_frames(
     n_rows: int = DEFAULT_N_ROWS,
     n_cols: int = DEFAULT_N_COLS,
 ) -> OrderedDict[str, pd.DataFrame]:
-    """Return the six notebook candidate discounts as long-form frames."""
+    """Return the six candidate discounts as long-form frames."""
 
     return OrderedDict(
         (name, discount_to_frame(matrix))

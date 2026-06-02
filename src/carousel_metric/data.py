@@ -56,7 +56,7 @@ def load_raw_data(
     interactions_csv: str | Path,
     clicks_csv: str | Path,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Load the two raw CSV files used by the original notebook."""
+    """Load the two raw CSV files used by the analysis."""
 
     interactions = pd.read_csv(interactions_csv)
     clicks = pd.read_csv(clicks_csv)
@@ -92,7 +92,7 @@ def filter_free_browsing_before_click(
     movie_clicks: pd.DataFrame,
     max_task_id: int = 30,
 ) -> pd.DataFrame:
-    """Reproduce the notebook's free-browsing filtering logic."""
+    """Apply the free-browsing filtering logic."""
 
     df = interactions_before_click.copy()
     movie_clicks = movie_clicks.copy()
@@ -150,7 +150,7 @@ def filter_by_click_familiarity(
 ) -> pd.DataFrame:
     """Filter user-task pairs by the click familiarity groups.
 
-    If `excluded_familiarities` is not provided, this reproduces the notebook's
+    If `excluded_familiarities` is not provided, this reproduces the original
     `unique()[-3:-1]` slice.
     """
 
@@ -247,7 +247,7 @@ def prepare_examination_results(
     apply_familiarity_filter: bool = True,
     max_task_id: int = 30,
 ) -> dict[str, pd.DataFrame]:
-    """Run the notebook's data-preparation workflow for all user groups."""
+    """Run the data-preparation workflow for all user groups."""
 
     interactions, clicks = load_raw_data(interactions_csv, clicks_csv)
     movie_clicks = interactions[interactions[CLICK_AOI_TYPE_COL] == "Movie"].copy()

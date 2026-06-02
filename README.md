@@ -1,22 +1,14 @@
 # Carousel Metric
 
-This repository reorganizes the original `carousel_metric.ipynb` notebook into a
-notebook-first analysis project for carousel examination behavior and 2D
-discount functions.
-
-Start with `notebooks/carousel_metric_reorganized.ipynb`. The raw original
-notebook is preserved at `notebooks/carousel_metric_original.ipynb`.
-
-The reorganized notebook is self-contained: it does not import helper functions
-from `src/carousel_metric/`. The `src/` package is kept as an optional reusable
-version of the same logic.
+This repository provides a Python package and command-line workflow for
+analyzing carousel examination behavior and comparing 2D discount functions.
 
 ## What The Project Does
 
 1. Loads raw eye-tracking interaction data and click summaries.
 2. Keeps only pre-click free-browsing interactions.
 3. Builds empirical examination-frequency grids for KINIT, UvA, and all users.
-4. Generates the candidate discount functions from the notebook.
+4. Generates candidate discount functions.
 5. Scores each discount function against the empirical examination grid.
 6. Produces heatmaps, comparison figures, and simulation reports.
 
@@ -28,10 +20,6 @@ carousel-metric/
 |   |-- README.md
 |   |-- click_summary_dataset.csv
 |   `-- summary_feedback.csv
-|-- notebooks/
-|   |-- README.md
-|   |-- carousel_metric_original.ipynb
-|   `-- carousel_metric_reorganized.ipynb
 |-- outputs/                         # Generated CSV/PDF/TXT outputs; ignored by git
 |-- src/carousel_metric/
 |   |-- analysis.py                  # End-to-end analysis workflow
@@ -53,26 +41,6 @@ source .venv/bin/activate
 python -m pip install -e ".[dev]"
 ```
 
-## Recommended Notebook Workflow
-
-Open and run:
-
-```text
-notebooks/carousel_metric_reorganized.ipynb
-```
-
-This notebook defines its own data-cleaning helpers, plotting helpers, discount
-functions, metric scoring, and simulation code directly in notebook cells.
-
-The notebook is organized as:
-
-1. setup and local file paths;
-2. data preparation;
-3. empirical examination heatmaps;
-4. candidate discount functions;
-5. metric scoring and final comparison figure;
-6. binary and graded N2DCG simulations.
-
 ## Data Inputs
 
 Place the raw CSV files here:
@@ -84,7 +52,7 @@ data/click_summary_dataset.csv
 
 See `data/README.md` for the dataset source.
 
-## Optional CLI Workflow
+## Run The Analysis
 
 ```bash
 carousel-metric analyze \
