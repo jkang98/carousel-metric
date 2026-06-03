@@ -140,7 +140,7 @@ def plot_examination_heatmap(
         vmax=vmax,
         linewidths=0.4,
         linecolor="white",
-        cbar_kws={"label": "Examination frequency (%)", "pad": 0.02},
+        cbar_kws={"label": "Examination probability", "pad": 0.02},
         ax=ax,
     )
     _annotate_heatmap_values(ax, pivot, fmt=".2f")

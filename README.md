@@ -17,7 +17,7 @@ carousel-metric/
 |   |-- metrics.py                   # Correlation and MSE scoring
 |   |-- plotting.py                  # Heatmaps and comparison figures
 |   |-- simulation.py                # Binary/graded N2DCG simulations
-|-- outputs/                         # Generated CSV/PDF/TXT outputs; ignored by git
+|-- outputs/                         # Generated CSV/PDF/TXT outputs
 |-- requirements.txt
 |-- tests/
 ```
@@ -58,6 +58,9 @@ This writes:
 - `outputs/metrics_summary.csv`
 - discount CSVs
 - PDF heatmaps and the 2x3 comparison figure
+
+The `exam_freq` and `inner_freq` columns in the examination CSVs are
+probabilities in the 0-1 range.
 
 ## Run The Simulation
 

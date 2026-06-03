@@ -228,9 +228,9 @@ def build_binary_examination(
     if n_pairs == 0:
         return empty_examination_frame()
 
-    result["exam_freq"] = result["n_users_tasks"] / n_pairs * 100.0
+    result["exam_freq"] = result["n_users_tasks"] / n_pairs
     result = result.merge(exam_row, on=x_col, how="left")
-    result["inner_freq"] = result["n_users_tasks"] / result["exam_row"] * 100.0
+    result["inner_freq"] = result["n_users_tasks"] / result["exam_row"]
     result = result[result[y_col] != 0].copy()
 
     if normalize and not result.empty:

@@ -1,7 +1,7 @@
 discount_key,discount_name,spearman,pearson,mse,n_positions
-mirrored_row_page,Mirrored F-Pattern with Row-Page Discount,0.9859187992284506,0.9770779520876287,0.009584283543210026,150
-mirrored_multiplicative_swipe,Mirrored F-Pattern with Multiplicative Swipe Penalty,0.9590827314171175,0.9197858037951169,0.028766161493637726,150
-mirrored_additive_swipe,Mirrored F-Pattern with Additive Swipe Penalty,0.9487080433740476,0.8590503902542105,0.02420029764640813,150
+mirrored_row_page,Mirrored F-Pattern with Row-Page Discount,0.9859187992284506,0.9770779520876287,0.009584283543210028,150
+mirrored_multiplicative_swipe,Mirrored F-Pattern with Multiplicative Swipe Penalty,0.9590827314171175,0.9197858037951169,0.02876616149363772,150
+mirrored_additive_swipe,Mirrored F-Pattern with Additive Swipe Penalty,0.9487080433740476,0.8590503902542107,0.024200297646408134,150
 mirrored_f_pattern,Mirrored F-Pattern,0.9386851625802539,0.8856323689330402,0.11704483192903221,150
-naive_additive_swipe,Naive F-Pattern with Additive Swipe Penalty,0.9299978155965944,0.8562100050610238,0.02433601821058378,150
-naive_f_pattern,Naive F-Pattern,0.8903653038546339,0.8661718579951172,0.09911245851033021,150
+naive_additive_swipe,Naive F-Pattern with Additive Swipe Penalty,0.9299978155965944,0.8562100050610238,0.024336018210583784,150
+naive_f_pattern,Naive F-Pattern,0.8903653038546339,0.8661718579951172,0.0991124585103302,150

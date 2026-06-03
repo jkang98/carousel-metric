@@ -2,20 +2,20 @@
 Simulation report
 ================================================================================
 Relevance mode:                         graded
-Total valid pairs evaluated:            19999
-Original N2DCG agrees with truth:       16978/19999 (84.9%)
-Reformulated N2DCG agrees with truth:   18770/19999 (93.9%)
-Flip (orig wrong, ref correct):         2071/19999 (10.4%)
-Regression (orig correct, ref wrong):   279/19999 (1.4%)
-Both wrong:                             950/19999 (4.8%)
-Net improvement (flip - regression):    1792/19999 (+9.0%)
+Total valid pairs evaluated:            20000
+Original N2DCG agrees with truth:       16979/20000 (84.9%)
+Reformulated N2DCG agrees with truth:   18771/20000 (93.9%)
+Flip (orig wrong, ref correct):         2071/20000 (10.4%)
+Regression (orig correct, ref wrong):   279/20000 (1.4%)
+Both wrong:                             950/20000 (4.8%)
+Net improvement (flip - regression):    1792/20000 (+9.0%)
 
 ================================================================================
 Robustness check across empirical N2DCG-gap thresholds
 ================================================================================
  N2DCG-gap thresh        N     Orig agree      Ref agree       Flip     Both wrong
 ------------------------------------------------------------------------------------
-             0.00    19999         84.9%          93.9%      10.4%           4.8%
+             0.00    20000         84.9%          93.9%      10.4%           4.8%
              0.01    18576         87.4%          96.7%       9.9%           2.7%
              0.02    17244         89.4%          98.2%       9.1%           1.5%
              0.05    13187         94.3%          99.8%       5.5%           0.2%
