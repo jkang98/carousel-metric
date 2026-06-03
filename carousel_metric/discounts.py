@@ -153,8 +153,8 @@ def mirrored_multiplicative_swipe_discount(
     n_cols: int = DEFAULT_N_COLS,
     alpha: float = 1,
     beta: float = 9,
-    rho_c: float = 0.9,
-    rho_r: float = 0.95,
+    eta: float = 0.9,
+    theta: float = 0.95,
     page_size: int = DEFAULT_PAGE_SIZE,
     vh: int = 5,
     dh: int = 5,
@@ -167,7 +167,7 @@ def mirrored_multiplicative_swipe_discount(
     eff_col = effective_column(cols, page_size=page_size)
     n_h, n_v = swipe_counts(rows, cols, vh=vh, dh=dh, vv=vv, dv=dv)
     base = 1.0 / np.log2(alpha * rows + beta * eff_col)
-    discount = base * (rho_c**n_h) * (rho_r**n_v)
+    discount = base * (eta**n_h) * (theta**n_v)
     return discount
 
 
@@ -176,17 +176,17 @@ def mirrored_row_page_discount(
     n_cols: int = DEFAULT_N_COLS,
     alpha: float = 4,
     beta: float = 9,
-    mu: float = 0.95,
-    page_penalty: float = 0.65,
+    mu: float = 0.65,
+    nu: float = 0.95,
     page_size: int = DEFAULT_PAGE_SIZE,
 ) -> np.ndarray:
-    """Mirrored F-pattern discount with row decay and page penalty."""
+    """Mirrored F-pattern discount with page penalty and row decay."""
 
     rows, cols = position_arrays(n_rows, n_cols)
     pages = np.ceil(cols / page_size).astype(int)
     eff_col = effective_column(cols, page_size=page_size)
-    h_factor = np.where(pages == 1, 1.0, page_penalty)
-    row_decay = mu ** (rows - 1)
+    h_factor = np.where(pages == 1, 1.0, mu)
+    row_decay = nu ** (rows - 1)
     discount = (1.0 / np.log2(alpha * rows + beta * eff_col)) * h_factor * row_decay
     return discount
 

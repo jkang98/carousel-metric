@@ -47,6 +47,6 @@ def test_naive_f_pattern_returns_raw_formula_values():
 
 
 def test_row_page_discount_penalizes_second_page():
-    matrix = mirrored_row_page_discount(page_penalty=0.65)
+    matrix = mirrored_row_page_discount(mu=0.65, nu=0.95)
 
     assert matrix[0, 5] < matrix[0, 4]

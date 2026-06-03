@@ -21,6 +21,31 @@ from .discounts import candidate_display_names
 from .metrics import align_empirical_and_discount, score_candidate_discounts
 
 
+TITLE_DASH = "\N{EM DASH}"
+
+COMPARISON_TITLES = {
+    "naive_f_pattern": rf"$d_t$ {TITLE_DASH} Naive F-Pattern",
+    "naive_additive_swipe": rf"$d_a$ {TITLE_DASH} Naive F-Pattern w/ Add. Swipe Pen.",
+    "mirrored_f_pattern": rf"$d_{{mir}}$ {TITLE_DASH} Mirr. F-Pattern",
+    "mirrored_additive_swipe": rf"$d_{{add}}$ {TITLE_DASH} Mirr. F-Pattern w/ Add. Swipe Pen.",
+    "mirrored_multiplicative_swipe": (
+        rf"$d_{{mul}}$ {TITLE_DASH} Mirr. F-Pattern w/ Mult. Swipe Pen."
+    ),
+    "mirrored_row_page": rf"$d_{{RPD}}$ {TITLE_DASH} Mirr. F-Pattern w/ Row-Page Disc.",
+}
+
+COMPARISON_PARAM_LABELS = {
+    "naive_f_pattern": r"$\alpha=7,\ \beta=6$",
+    "naive_additive_swipe": r"$\alpha=2,\ \beta=1,\ \gamma=9,\ \lambda=1$",
+    "mirrored_f_pattern": r"$\alpha=10,\ \beta=9$",
+    "mirrored_additive_swipe": r"$\alpha=2,\ \beta=1,\ \gamma=9,\ \lambda=1$",
+    "mirrored_multiplicative_swipe": (
+        r"$\alpha=1,\ \beta=9,\ \eta=0.9,\ \theta=0.95$"
+    ),
+    "mirrored_row_page": r"$\alpha=4,\ \beta=9,\ \mu=0.65,\ \nu=0.95$",
+}
+
+
 def _save_or_show(fig: plt.Figure, output_path: str | Path | None, show: bool) -> None:
     if output_path is not None:
         output_path = Path(output_path)
@@ -57,6 +82,36 @@ def _add_page_labels(
         )
 
 
+def _annotate_heatmap_values(
+    ax: plt.Axes,
+    values: pd.DataFrame,
+    fmt: str,
+    threshold: float | None = None,
+    fontsize: int = 8,
+) -> None:
+    """Write every heatmap cell value manually."""
+
+    numeric_values = values.to_numpy(dtype=float)
+    if threshold is None:
+        threshold = np.nanmax(numeric_values) * 0.6
+
+    for row_idx in range(values.shape[0]):
+        for col_idx in range(values.shape[1]):
+            value = values.iat[row_idx, col_idx]
+            if pd.isna(value):
+                continue
+            color = "white" if float(value) >= threshold else "#222222"
+            ax.text(
+                col_idx + 0.5,
+                row_idx + 0.5,
+                format(float(value), fmt),
+                ha="center",
+                va="center",
+                fontsize=fontsize,
+                color=color,
+            )
+
+
 def plot_examination_heatmap(
     examination: pd.DataFrame,
     title: str,
@@ -65,7 +120,7 @@ def plot_examination_heatmap(
     n_cols: int = DEFAULT_N_COLS,
     show: bool = False,
 ) -> plt.Figure:
-    """Plot a normalized empirical examination-frequency heatmap."""
+    """Plot an empirical examination-frequency heatmap."""
 
     pivot = examination.pivot(
         index=CAROUSEL_POSITION_COL,
@@ -73,20 +128,22 @@ def plot_examination_heatmap(
         values="exam_freq",
     )
     pivot = pivot.reindex(index=range(1, n_rows + 1), columns=range(1, n_cols + 1))
+    vmin = float(np.nanmin(pivot.to_numpy(dtype=float)))
+    vmax = float(np.nanmax(pivot.to_numpy(dtype=float)))
 
     fig, ax = plt.subplots(figsize=(18, 6))
     sns.heatmap(
         pivot,
         cmap="YlOrRd",
-        annot=True,
-        fmt=".2f",
-        vmin=0,
-        vmax=1,
+        annot=False,
+        vmin=vmin,
+        vmax=vmax,
         linewidths=0.4,
         linecolor="white",
-        cbar_kws={"label": "Normalized examination frequency", "pad": 0.02},
+        cbar_kws={"label": "Examination frequency (%)", "pad": 0.02},
         ax=ax,
     )
+    _annotate_heatmap_values(ax, pivot, fmt=".2f")
 
     ax.set_title(title, fontsize=14, fontweight="bold", pad=30)
     ax.set_xlabel("Movie position in carousel", fontsize=12, fontweight="bold")
@@ -117,20 +174,22 @@ def plot_discount_heatmap(
         values="discount",
     )
     pivot = pivot.reindex(index=range(1, n_rows + 1), columns=range(1, n_cols + 1))
+    vmin = float(np.nanmin(pivot.to_numpy(dtype=float)))
+    vmax = float(np.nanmax(pivot.to_numpy(dtype=float)))
 
     fig, ax = plt.subplots(figsize=(18, 6))
     sns.heatmap(
         pivot,
         cmap="YlOrRd",
-        annot=True,
-        fmt=".3f",
-        vmin=0,
-        vmax=1,
+        annot=False,
+        vmin=vmin,
+        vmax=vmax,
         linewidths=0.4,
         linecolor="white",
         cbar_kws={"label": "Discount value", "pad": 0.02},
         ax=ax,
     )
+    _annotate_heatmap_values(ax, pivot, fmt=".3f")
 
     ax.set_title(title, fontsize=14, fontweight="bold", pad=30)
     ax.set_xlabel("Movie position in carousel", fontsize=12, fontweight="bold")
@@ -187,7 +246,6 @@ def plot_candidate_comparison(
 
     metric_df = score_candidate_discounts(examination, discount_frames)
     best_key = metric_df.loc[0, "discount_key"]
-    display_names = candidate_display_names()
 
     ordered = list(discount_frames.items())
     fig, axes = plt.subplots(2, 3, figsize=(16, 5.2), sharex=True, sharey=True)
@@ -238,12 +296,32 @@ def plot_candidate_comparison(
             zorder=5 if is_best else 4,
         )
 
-        ax.set_title(f"{letters[idx]} {display_names.get(key, key)}", pad=10)
+        title = COMPARISON_TITLES.get(key, candidate_display_names().get(key, key))
+        ax.set_title(f"{letters[idx]} {title}", pad=10)
         ax.set_ylim(0, 1.05)
         ax.set_xlim(1, len(freq))
 
+        param_label = COMPARISON_PARAM_LABELS.get(key)
+        if param_label:
+            ax.text(
+                0.50,
+                0.96,
+                param_label,
+                transform=ax.transAxes,
+                ha="center",
+                va="top",
+                fontsize=7,
+                bbox={
+                    "boxstyle": "square,pad=0.2",
+                    "facecolor": "#FAFAFA",
+                    "edgecolor": "#DDDDDD",
+                    "linewidth": 0.5,
+                    "alpha": 0.88,
+                },
+            )
+
         metric_text = (
-            f"rho = {metrics['spearman']:.4f}\n"
+            rf"$\rho$ = {metrics['spearman']:.4f}" + "\n"
             f"r = {metrics['pearson']:.4f}\n"
             f"MSE = {metrics['mse']:.4f}"
         )
@@ -264,14 +342,14 @@ def plot_candidate_comparison(
         )
 
         if idx % 3 == 0:
-            ax.set_ylabel("Normalized value")
+            ax.set_ylabel("Normalized Value")
 
     row_centers = np.array([i * n_cols + (n_cols + 1) / 2 for i in range(n_rows)])
     row_labels = [f"R{i + 1}" for i in range(n_rows)]
     for ax in axes[-3:]:
         ax.set_xticks(row_centers)
         ax.set_xticklabels(row_labels)
-        ax.set_xlabel("Carousel position")
+        ax.set_xlabel("Carousel Position")
 
     legend_lines = [
         Line2D([0], [0], color=empirical_color, lw=2.0, alpha=0.7, label="Empirical examination frequency"),
