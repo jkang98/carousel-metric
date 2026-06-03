@@ -18,7 +18,6 @@ carousel-metric/
 |   |-- simulation.py                # Binary/graded N2DCG simulations
 |-- outputs/                         # Generated CSV/PDF/TXT outputs
 |-- requirements.txt
-|-- tests/
 ```
 
 ## Setup
@@ -97,12 +96,3 @@ for mode in ["binary", "graded"]:
     Path(f"outputs/simulation_{mode}.txt").write_text(report)
     print(report)
 ```
-
-## Development
-
-```bash
-python -m pytest
-```
-
-The test suite checks the discount geometry and metric scoring helpers. It does
-not require the private raw CSV files.
