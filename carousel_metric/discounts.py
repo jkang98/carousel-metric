@@ -16,16 +16,6 @@ from .constants import (
 )
 
 
-def normalize_discount(matrix: np.ndarray) -> np.ndarray:
-    """Normalize a discount matrix so its maximum value is 1."""
-
-    matrix = np.asarray(matrix, dtype=float)
-    max_value = np.nanmax(matrix)
-    if not np.isfinite(max_value) or max_value <= 0:
-        raise ValueError("Cannot normalize a discount matrix with non-positive max.")
-    return matrix / max_value
-
-
 def position_arrays(
     n_rows: int = DEFAULT_N_ROWS,
     n_cols: int = DEFAULT_N_COLS,
@@ -96,7 +86,7 @@ def naive_f_pattern_discount(
 
     rows, cols = position_arrays(n_rows, n_cols)
     discount = 1.0 / np.log2(alpha * rows + beta * cols)
-    return normalize_discount(discount)
+    return discount
 
 
 def naive_additive_swipe_discount(
@@ -117,7 +107,7 @@ def naive_additive_swipe_discount(
     n_h, n_v = swipe_counts(rows, cols, vh=vh, dh=dh, vv=vv, dv=dv)
     denom = alpha * rows + beta * cols + gamma * n_h + lambda_ * n_v
     discount = 1.0 / np.log2(denom)
-    return normalize_discount(discount)
+    return discount
 
 
 def mirrored_f_pattern_discount(
@@ -132,7 +122,7 @@ def mirrored_f_pattern_discount(
     rows, cols = position_arrays(n_rows, n_cols)
     eff_col = effective_column(cols, page_size=page_size)
     discount = 1.0 / np.log2(alpha * rows + beta * eff_col)
-    return normalize_discount(discount)
+    return discount
 
 
 def mirrored_additive_swipe_discount(
@@ -155,7 +145,7 @@ def mirrored_additive_swipe_discount(
     n_h, n_v = swipe_counts(rows, cols, vh=vh, dh=dh, vv=vv, dv=dv)
     denom = alpha * rows + beta * eff_col + gamma * n_h + lambda_ * n_v
     discount = 1.0 / np.log2(denom)
-    return normalize_discount(discount)
+    return discount
 
 
 def mirrored_multiplicative_swipe_discount(
@@ -178,7 +168,7 @@ def mirrored_multiplicative_swipe_discount(
     n_h, n_v = swipe_counts(rows, cols, vh=vh, dh=dh, vv=vv, dv=dv)
     base = 1.0 / np.log2(alpha * rows + beta * eff_col)
     discount = base * (rho_c**n_h) * (rho_r**n_v)
-    return normalize_discount(discount)
+    return discount
 
 
 def mirrored_row_page_discount(
@@ -198,7 +188,7 @@ def mirrored_row_page_discount(
     h_factor = np.where(pages == 1, 1.0, page_penalty)
     row_decay = mu ** (rows - 1)
     discount = (1.0 / np.log2(alpha * rows + beta * eff_col)) * h_factor * row_decay
-    return normalize_discount(discount)
+    return discount
 
 
 def candidate_discount_matrices(

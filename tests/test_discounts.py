@@ -3,6 +3,7 @@ import numpy as np
 from carousel_metric.discounts import (
     candidate_discount_matrices,
     effective_column,
+    naive_f_pattern_discount,
     mirrored_row_page_discount,
 )
 
@@ -29,14 +30,20 @@ def test_effective_column_mirrors_after_first_page():
     ]
 
 
-def test_candidate_discounts_are_normalized_10_by_15_matrices():
+def test_candidate_discounts_are_raw_10_by_15_matrices():
     matrices = candidate_discount_matrices()
 
     assert len(matrices) == 6
     for matrix in matrices.values():
         assert matrix.shape == (10, 15)
-        assert matrix.max() == 1.0
         assert np.all(matrix > 0)
+
+
+def test_naive_f_pattern_returns_raw_formula_values():
+    matrix = naive_f_pattern_discount(alpha=7, beta=6)
+
+    assert np.isclose(matrix[0, 0], 1 / np.log2(13))
+    assert matrix.max() < 1.0
 
 
 def test_row_page_discount_penalizes_second_page():
