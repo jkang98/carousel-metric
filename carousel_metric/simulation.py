@@ -9,6 +9,37 @@ from typing import Any
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
+from .constants import (
+    CAROUSEL_POSITION_COL,
+    DEFAULT_N_COLS,
+    DEFAULT_N_ROWS,
+    MOVIE_POSITION_COL,
+)
+
+
+def examination_to_matrix(
+    examination: Any,
+    n_rows: int = DEFAULT_N_ROWS,
+    n_cols: int = DEFAULT_N_COLS,
+) -> np.ndarray:
+    """Convert a long-form examination frame to a dense probability matrix."""
+
+    matrix = np.zeros((n_rows, n_cols), dtype=float)
+
+    for _, row in examination.iterrows():
+        row_pos = int(row[CAROUSEL_POSITION_COL]) - 1
+        col_pos = int(row[MOVIE_POSITION_COL]) - 1
+        if 0 <= row_pos < n_rows and 0 <= col_pos < n_cols:
+            matrix[row_pos, col_pos] = float(row["exam_freq"])
+
+    if matrix.max() > 1:
+        matrix = matrix / 100.0
+
+    if matrix.max() > 1:
+        raise ValueError("Examination frequencies must be probabilities or percentages.")
+
+    return matrix
+
 
 @dataclass(frozen=True)
 class DiscountParams:

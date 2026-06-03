@@ -10,7 +10,6 @@ carousel-metric/
 |   |-- README.md
 |-- carousel_metric/
 |   |-- analysis.py                  # End-to-end analysis workflow
-|   |-- cli.py                       # Command-line entrypoints
 |   |-- constants.py                 # Shared column names and defaults
 |   |-- data.py                      # Data cleaning and examination grids
 |   |-- discounts.py                 # Candidate discount functions
@@ -43,11 +42,18 @@ See `data/README.md` for the dataset source.
 
 ## Run The Analysis
 
-```bash
-python -m carousel_metric analyze \
-  --interactions data/summary_feedback.csv \
-  --clicks data/click_summary_dataset.csv \
-  --output-dir outputs
+Run this from a Python session or a small local script:
+
+```python
+from carousel_metric.analysis import run_analysis
+
+result = run_analysis(
+    interactions_csv="data/summary_feedback.csv",
+    clicks_csv="data/click_summary_dataset.csv",
+    output_dir="outputs",
+)
+
+print(result["metrics"].to_string(index=False))
 ```
 
 This writes:
@@ -67,22 +73,29 @@ probabilities in the 0-1 range.
 After running the analysis, simulate agreement against the UvA empirical
 examination grid:
 
-```bash
-python -m carousel_metric simulate \
-  --exam-csv outputs/examination_uva.csv \
-  --mode binary \
-  --trials 20000 \
-  --output outputs/simulation_binary.txt
-```
+```python
+from pathlib import Path
 
-For graded relevance:
+import pandas as pd
 
-```bash
-python -m carousel_metric simulate \
-  --exam-csv outputs/examination_uva.csv \
-  --mode graded \
-  --trials 20000 \
-  --output outputs/simulation_graded.txt
+from carousel_metric.simulation import (
+    SimulationConfig,
+    examination_to_matrix,
+    format_simulation_report,
+    run_simulation,
+)
+
+examination = pd.read_csv("outputs/examination_uva.csv")
+p_exam = examination_to_matrix(examination)
+
+for mode in ["binary", "graded"]:
+    result = run_simulation(
+        p_exam,
+        config=SimulationConfig(relevance_mode=mode, n_trials=20000),
+    )
+    report = format_simulation_report(result)
+    Path(f"outputs/simulation_{mode}.txt").write_text(report)
+    print(report)
 ```
 
 ## Development
