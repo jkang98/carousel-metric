@@ -68,7 +68,7 @@ def compute_original_discount(config: SimulationConfig) -> np.ndarray:
             )
             d[row - 1, col - 1] = 1.0 / np.log2(denom)
 
-    return d / d.max()
+    return d
 
 
 def compute_reformulated_discount(config: SimulationConfig) -> np.ndarray:
@@ -92,7 +92,7 @@ def compute_reformulated_discount(config: SimulationConfig) -> np.ndarray:
             row_decay = params.lambda_ ** (row - 1)
             d[row - 1, col - 1] = base * page_penalty * row_decay
 
-    return d / d.max()
+    return d
 
 
 def gain(rel: np.ndarray) -> np.ndarray:
@@ -128,6 +128,38 @@ def compute_ideal_2dcg_topic_constrained_from_sorted(
     score_matrix = sorted_topic_gains @ sorted_discount_rows.T
     topic_idx, row_idx = linear_sum_assignment(-score_matrix)
     return float(score_matrix[topic_idx, row_idx].sum())
+
+
+def compute_ideal_layout_topic_constrained(
+    topic_to_items_rel: np.ndarray,
+    discount_matrix: np.ndarray,
+) -> tuple[np.ndarray, float]:
+    """Construct the topic-constrained layout with maximum 2DCG."""
+
+    topic_to_items_rel = np.asarray(topic_to_items_rel, dtype=float)
+    discount_matrix = np.asarray(discount_matrix, dtype=float)
+
+    n_topics = topic_to_items_rel.shape[0]
+    n_rows = discount_matrix.shape[0]
+    if n_topics != n_rows:
+        raise ValueError(
+            "This implementation assumes the number of topics equals the number "
+            f"of display rows; got topics={n_topics}, rows={n_rows}."
+        )
+
+    sorted_topic_rels = np.sort(topic_to_items_rel, axis=1)[:, ::-1]
+    sorted_topic_gains = gain(sorted_topic_rels)
+    sorted_discount_rows = np.sort(discount_matrix, axis=1)[:, ::-1]
+    score_matrix = sorted_topic_gains @ sorted_discount_rows.T
+    topic_idx, row_idx = linear_sum_assignment(-score_matrix)
+
+    layout = np.zeros_like(topic_to_items_rel, dtype=float)
+    discount_col_orders = np.argsort(discount_matrix, axis=1)[:, ::-1]
+
+    for topic, row in zip(topic_idx, row_idx):
+        layout[row, discount_col_orders[row]] = sorted_topic_rels[topic]
+
+    return layout, float(score_matrix[topic_idx, row_idx].sum())
 
 
 def pick(score_a: float, score_b: float) -> str | None:
@@ -337,8 +369,7 @@ def run_simulation(
     rng = np.random.default_rng(config.rng_seed)
     counts: Counter = Counter()
     evaluated_results: list[dict[str, Any]] = []
-    both_wrong_records: list[dict[str, Any]] = []
-    gap_values: list[float] = []
+    largest_gap_both_wrong: dict[str, Any] | None = None
 
     for trial in range(config.n_trials):
         layout_a, layout_b, category_rows = sample_pair_same_candidate_sets(rng, config)
@@ -360,42 +391,57 @@ def run_simulation(
         if result is None:
             continue
 
-        gap_values.append(result["gap_Q"])
         orig_correct, ref_correct = update_counts(counts, result)
         evaluated_results.append(result)
 
         if not orig_correct and not ref_correct:
-            both_wrong_records.append(
-                {
+            if (
+                largest_gap_both_wrong is None
+                or result["gap_Q"] > largest_gap_both_wrong["gap_Q"]
+            ):
+                largest_gap_both_wrong = {
                     "trial": trial,
                     "A": layout_a,
                     "B": layout_b,
                     "category_rows": category_rows,
                     **result,
                 }
-            )
 
     n = counts["n"]
     if n == 0:
         raise RuntimeError("No valid pairs were evaluated. Check simulation settings.")
 
-    gap_array = np.array(gap_values, dtype=float)
-    percentiles = {
-        q: float(np.percentile(gap_array, q))
-        for q in [0, 10, 25, 50, 75, 90, 95, 99, 100]
-    }
     threshold_summary = [
         summarize_threshold(evaluated_results, threshold)
         for threshold in config.gap_thresholds
     ]
 
+    if largest_gap_both_wrong is not None:
+        ideal_layout, ideal_2dcg = compute_ideal_layout_topic_constrained(
+            largest_gap_both_wrong["category_rows"],
+            p_exam,
+        )
+        orig_ideal_layout, orig_ideal_2dcg = compute_ideal_layout_topic_constrained(
+            largest_gap_both_wrong["category_rows"],
+            d_orig,
+        )
+        ref_ideal_layout, ref_ideal_2dcg = compute_ideal_layout_topic_constrained(
+            largest_gap_both_wrong["category_rows"],
+            d_ref,
+        )
+        largest_gap_both_wrong["ideal_layout"] = ideal_layout
+        largest_gap_both_wrong["ideal_2dcg"] = ideal_2dcg
+        largest_gap_both_wrong["orig_ideal_layout"] = orig_ideal_layout
+        largest_gap_both_wrong["orig_ideal_2dcg"] = orig_ideal_2dcg
+        largest_gap_both_wrong["ref_ideal_layout"] = ref_ideal_layout
+        largest_gap_both_wrong["ref_ideal_2dcg"] = ref_ideal_2dcg
+
     return {
         "config": config,
         "counts": counts,
         "n": n,
-        "gap_percentiles": percentiles,
         "threshold_summary": threshold_summary,
-        "both_wrong_records": both_wrong_records,
+        "largest_gap_both_wrong": largest_gap_both_wrong,
         "D_orig": d_orig,
         "D_ref": d_ref,
     }
@@ -451,14 +497,7 @@ def format_simulation_report(result: dict[str, Any]) -> str:
             f"{counts['flip'] - counts['orig_only']}/{n} "
             f"({(counts['flip'] - counts['orig_only']) / n:+.1%})"
         ),
-        "",
-        "=" * 80,
-        "Empirical N2DCG-gap distribution",
-        "=" * 80,
     ]
-
-    for q, value in result["gap_percentiles"].items():
-        lines.append(f"{q:>3}th percentile: {value:.6f}")
 
     lines.extend(
         [
@@ -487,59 +526,67 @@ def format_simulation_report(result: dict[str, Any]) -> str:
                 f"{'-':>13}  {'-':>13}  {'-':>9}  {'-':>13}"
             )
 
-    records = result["both_wrong_records"]
-    lines.extend(["", "=" * 80, "Both-wrong examples", "=" * 80])
-
-    if not records:
-        lines.append("No both-wrong examples found.")
-        return "\n".join(lines)
-
-    records = sorted(records, key=lambda item: item["gap_Q"])
-
-    def add_example(example: dict[str, Any], label: str) -> None:
-        lines.append(
-            f"{label} (trial {example['trial']}, "
-            f"empirical N2DCG-gap = {example['gap_Q']:.4f})"
-        )
-        lines.append(
-            f"  Truth:        Q_A = {example['Q_A']:.4f}, "
-            f"Q_B = {example['Q_B']:.4f} -> {example['truth']}"
-        )
-        lines.append(
-            f"  Original:     {example['orig_A']:.4f} vs "
-            f"{example['orig_B']:.4f} -> {example['orig_pick']}"
-        )
-        lines.append(
-            f"  Reformulated: {example['ref_A']:.4f} vs "
-            f"{example['ref_B']:.4f} -> {example['ref_pick']}"
-        )
-
-    lines.extend(["", "5 examples with smallest empirical N2DCG-gap:", "-" * 80])
-    for idx, example in enumerate(records[:5], 1):
-        add_example(example, f"Example {idx}")
-
-    lines.extend(["", "5 examples with largest empirical N2DCG-gap:", "-" * 80])
-    for idx, example in enumerate(records[-5:], 1):
-        add_example(example, f"Example {idx}")
-
-    worst = records[-1]
+    largest_case = result.get("largest_gap_both_wrong")
     lines.extend(
         [
             "",
             "=" * 80,
             "Layout matrices for the largest-gap both-wrong case",
             "=" * 80,
-            f"Empirical N2DCG-gap: {worst['gap_Q']:.4f} "
-            f"(truth picks {worst['truth']})",
+        ]
+    )
+
+    if largest_case is None:
+        lines.append("No both-wrong examples found.")
+        return "\n".join(lines)
+
+    lines.extend(
+        [
+            (
+                f"Empirical N2DCG-gap: {largest_case['gap_Q']:.4f} "
+                f"(truth picks {largest_case['truth']})"
+            ),
+            (
+                f"Truth:        Q_A = {largest_case['Q_A']:.4f}, "
+                f"Q_B = {largest_case['Q_B']:.4f} -> {largest_case['truth']}"
+            ),
+            (
+                f"Original:     {largest_case['orig_A']:.4f} vs "
+                f"{largest_case['orig_B']:.4f} -> {largest_case['orig_pick']}"
+            ),
+            (
+                f"Reformulated: {largest_case['ref_A']:.4f} vs "
+                f"{largest_case['ref_B']:.4f} -> {largest_case['ref_pick']}"
+            ),
             "",
-            "Category-specific relevance compositions:",
-            "  " + format_layout(worst["category_rows"]),
+            "Category-specific relevance compositions used in this trial:",
+            "  " + format_layout(largest_case["category_rows"]),
             "",
-            f"Layout A (Empirical N2DCG = {worst['Q_A']:.4f}):",
-            "  " + format_layout(worst["A"]),
+            f"Layout A (Empirical N2DCG = {largest_case['Q_A']:.4f}):",
+            "  " + format_layout(largest_case["A"]),
             "",
-            f"Layout B (Empirical N2DCG = {worst['Q_B']:.4f}):",
-            "  " + format_layout(worst["B"]),
+            f"Layout B (Empirical N2DCG = {largest_case['Q_B']:.4f}):",
+            "  " + format_layout(largest_case["B"]),
+            "",
+            (
+                "Empirical-ideal layout under this composition "
+                f"(2DCG = {largest_case['ideal_2dcg']:.4f}, N2DCG = 1.0000):"
+            ),
+            "  " + format_layout(largest_case["ideal_layout"]),
+            "",
+            (
+                "Original-discount-ideal layout under this composition "
+                f"(2DCG = {largest_case['orig_ideal_2dcg']:.4f}, "
+                "Original N2DCG = 1.0000):"
+            ),
+            "  " + format_layout(largest_case["orig_ideal_layout"]),
+            "",
+            (
+                "Reformulated-discount-ideal layout under this composition "
+                f"(2DCG = {largest_case['ref_ideal_2dcg']:.4f}, "
+                "Reformulated N2DCG = 1.0000):"
+            ),
+            "  " + format_layout(largest_case["ref_ideal_layout"]),
         ]
     )
 

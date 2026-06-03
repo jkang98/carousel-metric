@@ -26,7 +26,7 @@ def examination_to_matrix(
     n_rows: int = DEFAULT_N_ROWS,
     n_cols: int = DEFAULT_N_COLS,
 ) -> np.ndarray:
-    """Convert a long-form examination frame to a dense matrix."""
+    """Convert a long-form examination frame to a dense probability matrix."""
 
     matrix = np.zeros((n_rows, n_cols), dtype=float)
 
@@ -36,9 +36,11 @@ def examination_to_matrix(
         if 0 <= row_pos < n_rows and 0 <= col_pos < n_cols:
             matrix[row_pos, col_pos] = float(row["exam_freq"])
 
-    max_value = matrix.max()
-    if max_value > 0:
-        matrix = matrix / max_value
+    if matrix.max() > 1:
+        matrix = matrix / 100.0
+
+    if matrix.max() > 1:
+        raise ValueError("Examination frequencies must be probabilities or percentages.")
     return matrix
 
 
