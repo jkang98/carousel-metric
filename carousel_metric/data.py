@@ -197,9 +197,9 @@ def build_binary_examination(
     task_col: str = TASK_COL,
     x_col: str = CAROUSEL_POSITION_COL,
     y_col: str = MOVIE_POSITION_COL,
-    normalize: bool = True,
+    normalize: bool = False,
 ) -> pd.DataFrame:
-    """Build a normalized binary examination-frequency table."""
+    """Build a binary examination-frequency table."""
 
     if interactions.empty:
         return empty_examination_frame()
