@@ -79,8 +79,8 @@ def discount_to_frame(matrix: np.ndarray) -> pd.DataFrame:
 def naive_f_pattern_discount(
     n_rows: int = DEFAULT_N_ROWS,
     n_cols: int = DEFAULT_N_COLS,
-    alpha: float = 1.4,
-    beta: float = 1.2,
+    alpha: float = 7,
+    beta: float = 6,
 ) -> np.ndarray:
     """Original F-pattern discount: 1 / log2(alpha * row + beta * col)."""
 
@@ -92,10 +92,10 @@ def naive_f_pattern_discount(
 def naive_additive_swipe_discount(
     n_rows: int = DEFAULT_N_ROWS,
     n_cols: int = DEFAULT_N_COLS,
-    alpha: float = 2.4,
-    beta: float = 1.2,
-    gamma: float = 10.0,
-    lambda_: float = 1.2,
+    alpha: float = 2,
+    beta: float = 1,
+    gamma: float = 9,
+    lambda_: float = 1,
     vh: int = 5,
     dh: int = 5,
     vv: int = 3,
@@ -113,8 +113,8 @@ def naive_additive_swipe_discount(
 def mirrored_f_pattern_discount(
     n_rows: int = DEFAULT_N_ROWS,
     n_cols: int = DEFAULT_N_COLS,
-    alpha: float = 10.0,
-    beta: float = 9.8,
+    alpha: float = 10,
+    beta: float = 9,
     page_size: int = DEFAULT_PAGE_SIZE,
 ) -> np.ndarray:
     """Mirrored F-pattern discount using the reversed page anchor."""
@@ -128,10 +128,10 @@ def mirrored_f_pattern_discount(
 def mirrored_additive_swipe_discount(
     n_rows: int = DEFAULT_N_ROWS,
     n_cols: int = DEFAULT_N_COLS,
-    alpha: float = 2.4,
-    beta: float = 1.2,
-    gamma: float = 9.6,
-    lambda_: float = 1.2,
+    alpha: float = 2,
+    beta: float = 1,
+    gamma: float = 9,
+    lambda_: float = 1,
     page_size: int = DEFAULT_PAGE_SIZE,
     vh: int = 5,
     dh: int = 5,
@@ -151,10 +151,10 @@ def mirrored_additive_swipe_discount(
 def mirrored_multiplicative_swipe_discount(
     n_rows: int = DEFAULT_N_ROWS,
     n_cols: int = DEFAULT_N_COLS,
-    alpha: float = 1.2,
-    beta: float = 9.2,
-    eta: float = 0.88,
-    theta: float = 0.94,
+    alpha: float = 1,
+    beta: float = 9,
+    eta: float = 0.9,
+    theta: float = 0.95,
     page_size: int = DEFAULT_PAGE_SIZE,
     vh: int = 5,
     dh: int = 5,
@@ -174,10 +174,10 @@ def mirrored_multiplicative_swipe_discount(
 def mirrored_row_page_discount(
     n_rows: int = DEFAULT_N_ROWS,
     n_cols: int = DEFAULT_N_COLS,
-    alpha: float = 7.2,
-    beta: float = 2.4,
-    mu: float = 0.76,
-    nu: float = 1.0,
+    alpha: float = 4,
+    beta: float = 9,
+    mu: float = 0.65,
+    nu: float = 0.95,
     page_size: int = DEFAULT_PAGE_SIZE,
 ) -> np.ndarray:
     """Mirrored F-pattern discount with page penalty and row decay."""

@@ -35,14 +35,12 @@ COMPARISON_TITLES = {
 }
 
 COMPARISON_PARAM_LABELS = {
-    "naive_f_pattern": r"$\alpha=1.4,\ \beta=1.2$",
-    "naive_additive_swipe": r"$\alpha=2.4,\ \beta=1.2,\ \gamma=10,\ \lambda=1.2$",
-    "mirrored_f_pattern": r"$\alpha=10,\ \beta=9.8$",
-    "mirrored_additive_swipe": r"$\alpha=2.4,\ \beta=1.2,\ \gamma=9.6,\ \lambda=1.2$",
-    "mirrored_multiplicative_swipe": (
-        r"$\alpha=1.2,\ \beta=9.2,\ \eta=0.88,\ \theta=0.94$"
-    ),
-    "mirrored_row_page": r"$\alpha=7.2,\ \beta=2.4,\ \mu=0.76,\ \nu=1$",
+    "naive_f_pattern": r"$\alpha=7,\ \beta=6$",
+    "naive_additive_swipe": r"$\alpha=2,\ \beta=1,\ \gamma=9,\ \lambda=1$",
+    "mirrored_f_pattern": r"$\alpha=10,\ \beta=9$",
+    "mirrored_additive_swipe": r"$\alpha=2,\ \beta=1,\ \gamma=9,\ \lambda=1$",
+    "mirrored_multiplicative_swipe": r"$\alpha=1,\ \beta=9,\ \eta=0.9,\ \theta=0.95$",
+    "mirrored_row_page": r"$\alpha=4,\ \beta=9,\ \mu=0.65,\ \nu=0.95$",
 }
 
 
