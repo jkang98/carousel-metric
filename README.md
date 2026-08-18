@@ -77,8 +77,8 @@ not invalidate anything written here.
 
 ## 2. Search Parameters On KINIT
 
-`alpha`, `beta`, `gamma` and `lambda_` vary over `(1, 10]` in steps of `0.2`, and
-`eta`, `theta`, `mu` and `nu` over `(0, 1]` in steps of `0.02` -- 18.3M
+`alpha`, `beta`, `gamma` and `lambda_` vary over `[1, 20]` in steps of `1`, and
+`eta`, `theta`, `mu` and `nu` over `(0, 1)` in steps of `0.01` -- 8.2M
 combinations in total, which takes a few minutes.
 
 ```python

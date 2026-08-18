@@ -43,9 +43,9 @@ def grid_values(start: float, stop: float, step: float) -> np.ndarray:
     return np.round(start + step * np.arange(count), 10)
 
 
-# alpha, beta, gamma, lambda_ over (1, 10] step 0.2; eta, theta, mu, nu over (0, 1] step 0.02.
-WEIGHT_GRID = grid_values(1.2, 10.0, 0.2)
-DECAY_GRID = grid_values(0.02, 1.0, 0.02)
+# alpha, beta, gamma, lambda_ over [1, 20] step 1; eta, theta, mu, nu over (0, 1) step 0.01.
+WEIGHT_GRID = grid_values(1.0, 20.0, 1.0)
+DECAY_GRID = grid_values(0.01, 0.99, 0.01)
 
 
 @dataclass(frozen=True)
