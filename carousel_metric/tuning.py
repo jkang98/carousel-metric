@@ -1,4 +1,8 @@
-"""Grid search for the discount parameters that best match empirical examination."""
+"""Grid search for the discount parameters that best match empirical examination.
+
+Every score is fitted and reported on the same examination grid, so the rankings
+are training-set results with no held-out split.
+"""
 
 from __future__ import annotations
 
@@ -144,28 +148,6 @@ def search_specs() -> "OrderedDict[str, SearchSpec]":
 SEARCH_SPECS = search_specs()
 
 
-@dataclass(frozen=True)
-class TuningResult:
-    """Best grid point for one metric, with the default parameters for reference."""
-
-    key: str
-    display_name: str
-    best_params: dict[str, float]
-    tuned_spearman: float
-    default_spearman: float
-    tuned_pearson: float
-    tuned_mse: float
-    n_positions: int
-    n_grid_points: int
-    n_optimal: int
-
-    @property
-    def delta_spearman(self) -> float:
-        """Return the Spearman gained over the default parameters."""
-
-        return self.tuned_spearman - self.default_spearman
-
-
 def prepare_targets(
     examination: pd.DataFrame,
     n_rows: int = DEFAULT_N_ROWS,
@@ -240,122 +222,82 @@ def tune_metric(
     *,
     n_rows: int = DEFAULT_N_ROWS,
     n_cols: int = DEFAULT_N_COLS,
+    top_n: int = 15,
     batch_size: int = BATCH_SIZE,
-) -> TuningResult:
-    """Grid-search one metric, ranking candidates by Spearman and breaking ties on Pearson."""
+) -> pd.DataFrame:
+    """Return one metric's `top_n` grid points, ranked by Spearman then Pearson."""
 
     row_idx, col_idx, gt = prepare_targets(examination, n_rows, n_cols)
     gt_ranks = _unit_ranks(gt[None, :])[0]
     gt_values = _unit(gt[None, :])[0]
 
-    def score(params: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-        with np.errstate(all="ignore"):
-            matrices = spec.discounts(params, n_rows, n_cols)
-        return score_batch(matrices[:, row_idx, col_idx], gt_ranks, gt_values)
-
-    default_spearman = float(score(spec.defaults)[0][0])
-
     combinations = spec.combinations()
-    best_spearman, best_pearson, best_row, n_optimal = -np.inf, -np.inf, None, 0
+    spearman = np.empty(len(combinations))
+    pearson = np.empty(len(combinations))
 
     for start in range(0, len(combinations), batch_size):
-        block = combinations[start : start + batch_size]
-        spearman, pearson = score(block)
+        stop = start + batch_size
+        with np.errstate(all="ignore"):
+            matrices = spec.discounts(combinations[start:stop], n_rows, n_cols)
+        spearman[start:stop], pearson[start:stop] = score_batch(
+            matrices[:, row_idx, col_idx], gt_ranks, gt_values
+        )
 
-        finite = np.isfinite(spearman)
-        if not finite.any():
-            continue
-        block_spearman = float(spearman[finite].max())
-
-        if block_spearman > best_spearman:
-            best_spearman, best_pearson, n_optimal = block_spearman, -np.inf, 0
-        if block_spearman < best_spearman:
-            continue
-
-        tied = finite & (spearman == best_spearman)
-        n_optimal += int(np.count_nonzero(tied))
-
-        index = int(np.argmax(np.where(tied, pearson, -np.inf)))
-        if float(pearson[index]) > best_pearson:
-            best_pearson, best_row = float(pearson[index]), block[index]
-
-    if best_row is None:
+    usable = np.flatnonzero(np.isfinite(spearman) & np.isfinite(pearson))
+    if usable.size == 0:
         raise RuntimeError(
             f"No usable discount found on the grid for metric '{spec.key}'."
         )
 
-    best_params = dict(zip(spec.names, (float(v) for v in best_row)))
-    pred = spec.discounts(best_params, n_rows, n_cols)[0][row_idx, col_idx]
-    gt_norm, pred_norm = gt / gt.max(), pred / pred.max()
-
-    return TuningResult(
-        key=spec.key,
-        display_name=candidate_display_names().get(spec.key, spec.key),
-        best_params=best_params,
-        tuned_spearman=float(best_spearman),
-        default_spearman=default_spearman,
-        tuned_pearson=float(best_pearson),
-        tuned_mse=float(np.mean((gt_norm - pred_norm) ** 2)),
-        n_positions=int(gt.size),
-        n_grid_points=spec.size,
-        n_optimal=n_optimal,
-    )
+    order = usable[np.lexsort((-pearson[usable], -spearman[usable]))[:top_n]]
+    ranking = pd.DataFrame(combinations[order], columns=spec.names)
+    ranking["spearman"] = spearman[order]
+    ranking["pearson"] = pearson[order]
+    return ranking
 
 
 def tune_all_metrics(
     examination: pd.DataFrame,
     specs: "OrderedDict[str, SearchSpec] | None" = None,
     **kwargs: object,
-) -> list[TuningResult]:
-    """Grid-search every metric in `specs`, defaulting to all six candidates."""
+) -> "OrderedDict[str, pd.DataFrame]":
+    """Return the ranking of every metric in `specs`, defaulting to all six candidates."""
 
     specs = SEARCH_SPECS if specs is None else specs
-    return [tune_metric(examination, spec, **kwargs) for spec in specs.values()]
-
-
-def tuning_summary(results: Sequence[TuningResult]) -> pd.DataFrame:
-    """Summarize tuning results, sorted by Spearman then Pearson."""
-
-    rows = [
-        {
-            "discount_key": result.key,
-            "discount_name": result.display_name,
-            "default_spearman": result.default_spearman,
-            "tuned_spearman": result.tuned_spearman,
-            "delta_spearman": result.delta_spearman,
-            "tuned_pearson": result.tuned_pearson,
-            "tuned_mse": result.tuned_mse,
-            "n_positions": result.n_positions,
-            "n_grid_points": result.n_grid_points,
-            "n_optimal": result.n_optimal,
-            **result.best_params,
-        }
-        for result in results
-    ]
-
-    return (
-        pd.DataFrame(rows)
-        .sort_values(["tuned_spearman", "tuned_pearson"], ascending=False)
-        .reset_index(drop=True)
+    return OrderedDict(
+        (key, tune_metric(examination, spec, **kwargs)) for key, spec in specs.items()
     )
 
 
-def tuned_discount_frames(
-    results: Sequence[TuningResult],
-    specs: "OrderedDict[str, SearchSpec] | None" = None,
-    n_rows: int = DEFAULT_N_ROWS,
-    n_cols: int = DEFAULT_N_COLS,
-) -> "OrderedDict[str, pd.DataFrame]":
-    """Return long-form discount frames at each metric's best grid point."""
+def format_ranking(ranking: pd.DataFrame, title: str | None = None) -> str:
+    """Render a ranking frame as an aligned plain-text table."""
 
-    specs = SEARCH_SPECS if specs is None else specs
-    frames: "OrderedDict[str, pd.DataFrame]" = OrderedDict()
-    for result in results:
-        if result.key not in specs:
-            raise KeyError(
-                f"No search spec for metric '{result.key}'. Pass the same `specs` "
-                "used for tuning so its discount function can be rebuilt."
-            )
-        matrix = specs[result.key].discounts(result.best_params, n_rows, n_cols)[0]
-        frames[result.key] = discount_to_frame(matrix)
-    return frames
+    columns = list(ranking.columns)
+    rows = [
+        [
+            f"{value:.4f}" if name in ("spearman", "pearson") else f"{value:g}"
+            for name, value in zip(columns, values)
+        ]
+        for values in ranking.itertuples(index=False, name=None)
+    ]
+    widths = [
+        max([len(name)] + [len(row[index]) for row in rows])
+        for index, name in enumerate(columns)
+    ]
+
+    def line(cells):
+        return "  ".join(cell.rjust(width) for cell, width in zip(cells, widths))
+
+    header = line(columns)
+    out = [header, "-" * len(header)] + [line(row) for row in rows]
+    return "\n".join(([title] if title else []) + out)
+
+
+def format_all_rankings(rankings: "OrderedDict[str, pd.DataFrame]") -> str:
+    """Render every metric's ranking as one plain-text report."""
+
+    names = candidate_display_names()
+    return "\n\n".join(
+        format_ranking(ranking, title=names.get(key, key))
+        for key, ranking in rankings.items()
+    )

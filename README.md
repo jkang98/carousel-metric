@@ -16,6 +16,7 @@ carousel-metric/
 |   |-- metrics.py                   # Correlation and MSE scoring
 |   |-- plotting.py                  # Heatmaps and comparison figures
 |   |-- simulation.py                # Binary/graded N2DCG simulations
+|   |-- tuning.py                    # Parameter grid search
 |-- outputs/                         # Generated CSV/PDF/TXT outputs
 |-- requirements.txt
 ```
@@ -66,6 +67,62 @@ This writes:
 
 The `exam_freq` and `inner_freq` columns in the examination CSVs are
 probabilities in the 0-1 range.
+
+## Run The Parameter Grid Search
+
+The KINIT and UvA cohorts are the training and test sets: parameters are searched
+on **KINIT**, and `run_analysis` then scores and plots them on **UvA**. Keep the
+two apart -- tuning on `examination_uva.csv` would fit the test set.
+
+`alpha`, `beta`, `gamma` and `lambda_` vary over `(1, 10]` in steps of `0.2`, and
+`eta`, `theta`, `mu` and `nu` over `(0, 1]` in steps of `0.02` -- 18.3M
+combinations in total, which takes a few minutes.
+
+```python
+import pandas as pd
+
+from carousel_metric.tuning import tune_all_metrics, format_all_rankings
+
+training = pd.read_csv("outputs/examination_kinit.csv")   # training set
+rankings = tune_all_metrics(training)
+
+print(format_all_rankings(rankings))
+```
+
+This prints one table per discount function, listing the top 15 parameter
+combinations ranked by Spearman and, wherever Spearman ties, by Pearson:
+
+```text
+Mirrored F-Pattern with Row-Page Discount
+alpha  beta    mu  nu  spearman  pearson
+----------------------------------------
+  4.4   2.2   0.6   1    0.9917   0.9813
+  4.4   2.2  0.62   1    0.9917   0.9813
+  4.4   2.2  0.58   1    0.9917   0.9811
+```
+
+`tune_all_metrics` returns an `OrderedDict` of `DataFrame`s keyed by discount, so
+the rankings can be written straight out:
+
+```python
+for key, ranking in rankings.items():
+    ranking.to_csv(f"outputs/tuned_{key}.csv", index=False)
+```
+
+Pass `top_n` to keep more or fewer rows, and use `tune_metric` for a single
+discount function:
+
+```python
+from carousel_metric.tuning import SEARCH_SPECS, tune_metric, format_ranking
+
+ranking = tune_metric(training, SEARCH_SPECS["mirrored_row_page"], top_n=25)
+print(format_ranking(ranking))
+```
+
+The Spearman and Pearson columns are training-set scores, measured on the same
+KINIT grid the parameters were fitted to. To report a parameter set, copy it into
+the matching function in `discounts.py` and re-run `run_analysis`, which scores
+and plots against the held-out UvA grid.
 
 ## Run The Simulation
 
