@@ -146,8 +146,16 @@ def mirrored_row_page_discount(
 ) -> np.ndarray:
 ```
 
-The parameter labels drawn on the comparison figure live in
-`COMPARISON_PARAM_LABELS` in `plotting.py` and are edited by hand to match.
+Two files have to be edited by hand, and nothing checks that they agree:
+
+- `discounts.py` -- the function defaults above. This is what actually gets
+  computed, scored and plotted.
+- `plotting.py` -- the matching entry in `COMPARISON_PARAM_LABELS`. This is only
+  the text annotated on the comparison figure.
+
+Updating one but not the other fails silently. The figure would draw the new
+curves and report the new Spearman, Pearson and MSE, while still annotating the
+old parameters, and nothing raises an error. Change both together.
 
 ## 4. Run The Analysis On UvA
 
