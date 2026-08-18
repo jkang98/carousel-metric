@@ -40,39 +40,42 @@ data/click_summary_dataset.csv
 
 See `data/README.md` for the dataset source.
 
-## Run The Analysis
+## Workflow
 
-Run this from a Python session or a small local script:
+The KINIT and UvA cohorts are the training and test sets: discount parameters are
+searched on KINIT and reported on UvA. The four steps therefore run in this order.
+
+1. Build the examination grids. This reads only the eye-tracking data and takes no
+   discount parameters, so it can run before anything has been tuned.
+2. Grid-search the parameters on the KINIT grid.
+3. Copy the parameters you pick into `discounts.py`.
+4. Run the analysis, which scores and plots them against the held-out UvA grid.
+
+## 1. Build The Examination Grids
+
+`prepare_examination_results` turns the raw CSVs into one examination grid per
+cohort:
 
 ```python
-from carousel_metric.analysis import run_analysis
+from carousel_metric.data import prepare_examination_results
 
-result = run_analysis(
-    interactions_csv="data/summary_feedback.csv",
-    clicks_csv="data/click_summary_dataset.csv",
-    output_dir="outputs",
+grids = prepare_examination_results(
+    "data/summary_feedback.csv",
+    "data/click_summary_dataset.csv",
 )
 
-print(result["metrics"].to_string(index=False))
+for group, frame in grids.items():
+    frame.to_csv(f"outputs/examination_{group}.csv", index=False)
 ```
 
-This writes:
-
-- `outputs/examination_overall.csv`
-- `outputs/examination_kinit.csv`
-- `outputs/examination_uva.csv`
-- `outputs/metrics_summary.csv`
-- discount CSVs
-- PDF heatmaps and the 2x3 comparison figure
-
-The `exam_freq` and `inner_freq` columns in the examination CSVs are
+This writes `outputs/examination_overall.csv`, `outputs/examination_kinit.csv`
+and `outputs/examination_uva.csv`. The `exam_freq` and `inner_freq` columns are
 probabilities in the 0-1 range.
 
-## Run The Parameter Grid Search
+Step 4 rebuilds these same grids on its way to scoring, so running it later does
+not invalidate anything written here.
 
-The KINIT and UvA cohorts are the training and test sets: parameters are searched
-on **KINIT**, and `run_analysis` then scores and plots them on **UvA**. Keep the
-two apart -- tuning on `examination_uva.csv` would fit the test set.
+## 2. Search Parameters On KINIT
 
 `alpha`, `beta`, `gamma` and `lambda_` vary over `(1, 10]` in steps of `0.2`, and
 `eta`, `theta`, `mu` and `nu` over `(0, 1]` in steps of `0.02` -- 18.3M
@@ -89,8 +92,12 @@ rankings = tune_all_metrics(training)
 print(format_all_rankings(rankings))
 ```
 
+Tuning on `examination_uva.csv` instead would fit the test set, so keep the two
+apart.
+
 This prints one table per discount function, listing the top 15 parameter
-combinations ranked by Spearman and, wherever Spearman ties, by Pearson:
+combinations ranked by Spearman and, wherever Spearman ties, by Pearson. The
+values below are only illustrative:
 
 ```text
 Mirrored F-Pattern with Row-Page Discount
@@ -100,6 +107,9 @@ alpha  beta    mu  nu  spearman  pearson
   4.4   2.2  0.62   1    0.9917   0.9813
   4.4   2.2  0.58   1    0.9917   0.9811
 ```
+
+Both columns are training-set scores, measured on the same KINIT grid the
+parameters were fitted to. Step 4 is what produces the numbers to report.
 
 `tune_all_metrics` returns an `OrderedDict` of `DataFrame`s keyed by discount, so
 the rankings can be written straight out:
@@ -119,10 +129,52 @@ ranking = tune_metric(training, SEARCH_SPECS["mirrored_row_page"], top_n=25)
 print(format_ranking(ranking))
 ```
 
-The Spearman and Pearson columns are training-set scores, measured on the same
-KINIT grid the parameters were fitted to. To report a parameter set, copy it into
-the matching function in `discounts.py` and re-run `run_analysis`, which scores
-and plots against the held-out UvA grid.
+## 3. Update The Discount Functions
+
+Pick a row from each table and write it into the matching function's defaults in
+`discounts.py`. For the example above:
+
+```python
+def mirrored_row_page_discount(
+    n_rows: int = DEFAULT_N_ROWS,
+    n_cols: int = DEFAULT_N_COLS,
+    alpha: float = 4.4,
+    beta: float = 2.2,
+    mu: float = 0.6,
+    nu: float = 1,
+    page_size: int = DEFAULT_PAGE_SIZE,
+) -> np.ndarray:
+```
+
+The parameter labels drawn on the comparison figure live in
+`COMPARISON_PARAM_LABELS` in `plotting.py` and are edited by hand to match.
+
+## 4. Run The Analysis On UvA
+
+```python
+from carousel_metric.analysis import run_analysis
+
+result = run_analysis(
+    interactions_csv="data/summary_feedback.csv",
+    clicks_csv="data/click_summary_dataset.csv",
+    output_dir="outputs",
+    target_group="uva",
+)
+
+print(result["metrics"].to_string(index=False))
+```
+
+This writes:
+
+- `outputs/examination_overall.csv`
+- `outputs/examination_kinit.csv`
+- `outputs/examination_uva.csv`
+- `outputs/metrics_summary.csv`
+- discount CSVs
+- PDF heatmaps and the 2x3 comparison figure
+
+`metrics_summary.csv` and the comparison figure are the held-out results, since
+`target_group="uva"` scores against the cohort the parameters were not fitted to.
 
 ## Run The Simulation
 
