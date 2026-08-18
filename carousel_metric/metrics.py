@@ -63,12 +63,17 @@ def score_discount_frame(
     gt = merged["exam_freq"].to_numpy(dtype=float)
     pred = merged["discount"].to_numpy(dtype=float)
 
+    # Taken before normalizing: dividing by a maximum can round values that differ
+    # by one ULP onto the same number, inventing a tie that shifts the ranks.
+    spearman, _ = spearmanr(gt, pred)
+
     if normalize_empirical and gt.max() > 0:
         gt = gt / gt.max()
     if normalize_discount_values and pred.max() > 0:
         pred = pred / pred.max()
 
     metrics = discount_metrics(gt, pred)
+    metrics["spearman"] = float(spearman)
     metrics["n_positions"] = int(len(merged))
     return metrics
 
