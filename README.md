@@ -1,33 +1,5 @@
-# Carousel Metric
+# Revisiting N2DCG: An Empirically Grounded Reformulation of Carousel Recommendation Evaluation
 
-This repository is for analyzing carousel examination behavior and comparing 2D discount functions.
-
-## Repository Layout
-
-```text
-carousel-metric/
-|-- data/
-|   |-- README.md
-|-- carousel_metric/
-|   |-- analysis.py                  # End-to-end analysis workflow
-|   |-- constants.py                 # Shared column names and defaults
-|   |-- data.py                      # Data cleaning and examination grids
-|   |-- discounts.py                 # Candidate discount functions
-|   |-- metrics.py                   # Correlation and MSE scoring
-|   |-- plotting.py                  # Heatmaps and comparison figures
-|   |-- simulation.py                # Binary/graded N2DCG simulations
-|   |-- tuning.py                    # Parameter grid search
-|-- outputs/                         # Generated CSV/PDF/TXT outputs
-|-- requirements.txt
-```
-
-## Setup
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-```
 
 ## Data Inputs
 
@@ -40,21 +12,11 @@ data/click_summary_dataset.csv
 
 See `data/README.md` for the dataset source.
 
-## Workflow
 
-The KINIT and UvA cohorts are the training and test sets: discount parameters are
-searched on KINIT and reported on UvA. The four steps therefore run in this order.
 
-1. Build the examination grids. This reads only the eye-tracking data and takes no
-   discount parameters, so it can run before anything has been tuned.
-2. Grid-search the parameters on the KINIT grid.
-3. Copy the parameters you pick into `discounts.py`.
-4. Run the analysis, which scores and plots them against the held-out UvA grid.
+## Build The Examination Grids
 
-## 1. Build The Examination Grids
-
-`prepare_examination_results` turns the raw CSVs into one examination grid per
-cohort:
+This build examination probabilities of each position for KINIT (training) and UvA (test):
 
 ```python
 from carousel_metric.data import prepare_examination_results
@@ -68,18 +30,12 @@ for group, frame in grids.items():
     frame.to_csv(f"outputs/examination_{group}.csv", index=False)
 ```
 
-This writes `outputs/examination_overall.csv`, `outputs/examination_kinit.csv`
-and `outputs/examination_uva.csv`. The `exam_freq` and `inner_freq` columns are
-probabilities in the 0-1 range.
 
-Step 4 rebuilds these same grids on its way to scoring, so running it later does
-not invalidate anything written here.
 
-## 2. Search Parameters On KINIT
+## Search Parameters On KINIT
 
 `alpha`, `beta`, `gamma` and `lambda_` vary over `[1, 10]` in steps of `1`, and
-`eta`, `theta`, `mu` and `nu` over `(0, 1)` in steps of `0.05` -- 92,400
-combinations in total, which runs in a few seconds.
+`eta`, `theta`, `mu` and `nu` over `(0, 1)` in steps of `0.05`.
 
 ```python
 import pandas as pd
@@ -89,11 +45,11 @@ from carousel_metric.tuning import tune_all_metrics, format_all_rankings
 training = pd.read_csv("outputs/examination_kinit.csv")   # training set
 rankings = tune_all_metrics(training)
 
+for key, ranking in rankings.items():
+    ranking.to_csv(f"outputs/tuned_{key}.csv", index=False)
+
 print(format_all_rankings(rankings))
 ```
-
-Tuning on `examination_uva.csv` instead would fit the test set, so keep the two
-apart.
 
 This prints one table per discount function, listing the top 15 parameter
 combinations ranked by Spearman and, wherever Spearman ties, by Pearson. The
@@ -108,45 +64,10 @@ alpha  beta    mu  nu  spearman  pearson
   4.4   2.2  0.58   1    0.9917   0.9811
 ```
 
-Both columns are training-set scores, measured on the same KINIT grid the
-parameters were fitted to. Step 4 is what produces the numbers to report.
 
-`tune_all_metrics` returns an `OrderedDict` of `DataFrame`s keyed by discount, so
-the rankings can be written straight out:
+## Update The Discount Functions
 
-```python
-for key, ranking in rankings.items():
-    ranking.to_csv(f"outputs/tuned_{key}.csv", index=False)
-```
-
-Pass `top_n` to keep more or fewer rows, and use `tune_metric` for a single
-discount function:
-
-```python
-from carousel_metric.tuning import SEARCH_SPECS, tune_metric, format_ranking
-
-ranking = tune_metric(training, SEARCH_SPECS["mirrored_row_page"], top_n=25)
-print(format_ranking(ranking))
-```
-
-## 3. Update The Discount Functions
-
-Pick a row from each table and write it into the matching function's defaults in
-`discounts.py`. For the example above:
-
-```python
-def mirrored_row_page_discount(
-    n_rows: int = DEFAULT_N_ROWS,
-    n_cols: int = DEFAULT_N_COLS,
-    alpha: float = 4.4,
-    beta: float = 2.2,
-    mu: float = 0.6,
-    nu: float = 1,
-    page_size: int = DEFAULT_PAGE_SIZE,
-) -> np.ndarray:
-```
-
-Two files have to be edited by hand, and nothing checks that they agree:
+Pick a row from each table. Two files have to be edited by hand, and nothing checks that they agree:
 
 - `discounts.py` -- the function defaults above. This is what actually gets
   computed, scored and plotted.
@@ -157,7 +78,7 @@ Updating one but not the other fails silently. The figure would draw the new
 curves and report the new Spearman, Pearson and MSE, while still annotating the
 old parameters, and nothing raises an error. Change both together.
 
-## 4. Run The Analysis On UvA
+## Run The Analysis On UvA
 
 ```python
 from carousel_metric.analysis import run_analysis
@@ -180,9 +101,6 @@ This writes:
 - `outputs/metrics_summary.csv`
 - discount CSVs
 - PDF heatmaps and the 2x3 comparison figure
-
-`metrics_summary.csv` and the comparison figure are the held-out results, since
-`target_group="uva"` scores against the cohort the parameters were not fitted to.
 
 ## Run The Simulation
 
