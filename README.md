@@ -1,5 +1,7 @@
 # Revisiting N2DCG: An Empirically Grounded Reformulation of Carousel Recommendation Evaluation
-
+This repository contains the implementation and experimental results for the paper
+**Revisiting N2DCG: An Empirically Grounded Reformulation of Carousel Recommendation
+Evaluation** (CIKM, 2026).
 
 ## Data Inputs
 
