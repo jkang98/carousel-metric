@@ -16,9 +16,9 @@ See `data/README.md` for the dataset source.
 
 
 
-## Build The Examination Grids
+## Compute The Examination Frequencies
 
-This build examination probabilities of each position for KINIT (training) and UvA (test):
+This compute examination frequencies of each position for KINIT (training) and UvA (test):
 
 ```python
 from carousel_metric.data import prepare_examination_results
@@ -54,31 +54,11 @@ print(format_all_rankings(rankings))
 ```
 
 This prints one table per discount function, listing the top 15 parameter
-combinations ranked by Spearman and, wherever Spearman ties, by Pearson. The
-values below are only illustrative:
-
-```text
-Mirrored F-Pattern with Row-Page Discount
-alpha  beta    mu  nu  spearman  pearson
-----------------------------------------
-  4.4   2.2   0.6   1    0.9917   0.9813
-  4.4   2.2  0.62   1    0.9917   0.9813
-  4.4   2.2  0.58   1    0.9917   0.9811
-```
+combinations ranked by Spearman and, wherever Spearman ties, by Pearson. 
+Pick the first row from each table. 
+Two files (`discounts.py` and `plotting.py`) need to be edited by hand.
 
 
-## Update The Discount Functions
-
-Pick a row from each table. Two files have to be edited by hand, and nothing checks that they agree:
-
-- `discounts.py` -- the function defaults above. This is what actually gets
-  computed, scored and plotted.
-- `plotting.py` -- the matching entry in `COMPARISON_PARAM_LABELS`. This is only
-  the text annotated on the comparison figure.
-
-Updating one but not the other fails silently. The figure would draw the new
-curves and report the new Spearman, Pearson and MSE, while still annotating the
-old parameters, and nothing raises an error. Change both together.
 
 ## Run The Analysis On UvA
 
@@ -95,19 +75,7 @@ result = run_analysis(
 print(result["metrics"].to_string(index=False))
 ```
 
-This writes:
-
-- `outputs/examination_overall.csv`
-- `outputs/examination_kinit.csv`
-- `outputs/examination_uva.csv`
-- `outputs/metrics_summary.csv`
-- discount CSVs
-- PDF heatmaps and the 2x3 comparison figure
-
 ## Run The Simulation
-
-After running the analysis, simulate agreement against the UvA empirical
-examination grid:
 
 ```python
 from pathlib import Path
