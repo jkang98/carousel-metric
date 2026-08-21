@@ -3,7 +3,7 @@ This repository contains the implementation and experimental results for the pap
 **Revisiting N2DCG: An Empirically Grounded Reformulation of Carousel Recommendation
 Evaluation** (CIKM, 2026).
 
-## Data Inputs
+## Data preparation
 
 Download and place the raw CSV files here:
 
@@ -16,7 +16,7 @@ See `data/README.md` for the dataset source.
 
 
 
-## Compute The Examination Frequencies
+## Compute the examination frequencies
 
 This compute examination frequencies of each position for KINIT (training) and UvA (test):
 
@@ -34,7 +34,7 @@ for group, frame in grids.items():
 
 
 
-## Search Parameters On KINIT
+## Search parameters on KINIT
 
 `alpha`, `beta`, `gamma` and `lambda_` vary over `[1, 10]` in steps of `1`, and
 `eta`, `theta`, `mu` and `nu` over `(0, 1)` in steps of `0.05`.
@@ -60,7 +60,7 @@ Two files (`discounts.py` and `plotting.py`) need to be edited by hand.
 
 
 
-## Run The Analysis On UvA
+## Run the analysis on UvA
 
 ```python
 from carousel_metric.analysis import run_analysis
@@ -75,7 +75,7 @@ result = run_analysis(
 print(result["metrics"].to_string(index=False))
 ```
 
-## Run The Simulation
+## Run the simulation
 
 ```python
 from pathlib import Path
